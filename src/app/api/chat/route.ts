@@ -10,6 +10,24 @@
 import { streamText, convertToModelMessages, type UIMessage } from 'ai'
 import { model } from '@/lib/ai'
 
+// STEP 6 — System prompt. The system message conditions the model on
+// persona, tone, and constraints WITHOUT consuming a user turn. It's
+// sent on every request but invisible in the UI — exactly what you want
+// for "this AI is a helpful coding tutor" framing.
+//
+// Keep it tight. Long system prompts eat your context budget on every
+// request and slow first-token latency. ~3-5 short paragraphs is the
+// sweet spot for chat assistants.
+const SYSTEM_PROMPT = `You are TechFromZero Bot, a friendly coding tutor for beginners.
+
+When asked a technical question:
+- Lead with a one-sentence answer.
+- Then expand with 2-4 short paragraphs.
+- Use concrete, runnable code examples when relevant (always fenced).
+- Avoid jargon you haven't defined first.
+
+Keep responses focused. If the user wants more depth, they'll ask.`
+
 // App Router auto-detects this as POST /api/chat. The body shape comes from
 // `useChat`: `{ messages: UIMessage[], id?: string }`. We pass the messages
 // through convertToModelMessages() to drop client-only metadata (timestamps,
@@ -19,6 +37,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model,
+    system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages)
   })
 
