@@ -118,6 +118,14 @@ export default function Page() {
           </button>
         </form>
       </section>
+
+      <footer className="footer">
+        <a href="https://dev48v.infy.uk" rel="noopener">← Back to dev48v.infy.uk</a>
+        <span className="footer-dot" aria-hidden>·</span>
+        <a href="https://dev48v.infy.uk/techfromzero.php" rel="noopener">See all TechFromZero days</a>
+        <span className="footer-dot" aria-hidden>·</span>
+        <a href="https://github.com/dev48v/ai-sdk-from-zero" rel="noopener">Source on GitHub</a>
+      </footer>
     </main>
   )
 }
