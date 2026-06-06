@@ -14,8 +14,8 @@ import { modelLabel } from '@/lib/ai-meta'
 
 const SUGGESTIONS = [
   'Explain WebAssembly in one paragraph.',
-  'Write a haiku about TypeScript.',
-  'What are the three hardest things in computer science?',
+  'What time is it in Tokyo? Use a tool.',
+  'Count the words in "The quick brown fox jumps over the lazy dog".',
   'Recommend a beginner project for learning Rust.'
 ]
 
@@ -79,9 +79,17 @@ export default function Page() {
             <div key={m.id} className={`msg msg-${m.role}`}>
               <span className="msg-role">{m.role === 'user' ? 'you' : modelLabel}</span>
               <div className="msg-body">
-                {m.parts.map((part, i) =>
-                  part.type === 'text' ? <span key={i}>{part.text}</span> : null
-                )}
+                {m.parts.map((part, i) => {
+                  if (part.type === 'text') return <span key={i}>{part.text}</span>
+                  // STEP 7 — tool-call markers. Each tool invocation arrives
+                  // as its own part on the assistant message. Show a small
+                  // pill so the user knows the model called a real function.
+                  if (part.type?.startsWith?.('tool-')) {
+                    const name = part.type.replace(/^tool-/, '')
+                    return <div key={i} className="tool-pill">🔧 {name}</div>
+                  }
+                  return null
+                })}
                 {/* Streaming caret on the last assistant message while tokens arrive. */}
                 {m.role === 'assistant' && isStreaming && m === messages[messages.length - 1] && (
                   <span className="caret" />

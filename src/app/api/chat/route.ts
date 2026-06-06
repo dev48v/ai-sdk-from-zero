@@ -7,8 +7,43 @@
 // configured for you.
 //
 // The whole "ChatGPT-clone backend" is 15 lines.
-import { streamText, convertToModelMessages, type UIMessage } from 'ai'
+import { streamText, convertToModelMessages, tool, stepCountIs, type UIMessage } from 'ai'
+import { z } from 'zod'
 import { model } from '@/lib/ai'
+
+// STEP 7 — Tools. The model can call these instead of guessing. The SDK
+// handles the request/response loop: model emits a tool call → we run the
+// handler → return result → model sees output → composes final reply. All
+// streaming through the same response — the client sees it as one
+// continuous assistant turn.
+const tools = {
+  get_current_time: tool({
+    description: 'Get the current date and time in ISO 8601 + a human-readable form. Use whenever the user asks "what time is it?", "what year is it?", or anything time-sensitive.',
+    inputSchema: z.object({
+      timezone: z.string().optional().describe('IANA timezone, e.g. "Asia/Kolkata". Defaults to UTC.')
+    }),
+    execute: async ({ timezone }) => {
+      const tz = timezone ?? 'UTC'
+      const now = new Date()
+      return {
+        iso: now.toISOString(),
+        human: now.toLocaleString('en-US', { timeZone: tz, dateStyle: 'full', timeStyle: 'long' }),
+        timezone: tz
+      }
+    }
+  }),
+  word_count: tool({
+    description: 'Count the words, characters, and lines in a piece of text. Use when the user asks "how many words is this?" or wants stats on a passage.',
+    inputSchema: z.object({
+      text: z.string().describe('The text to analyse.')
+    }),
+    execute: async ({ text }) => ({
+      characters: text.length,
+      words: text.trim().split(/\s+/).filter(Boolean).length,
+      lines: text.split('\n').length
+    })
+  })
+}
 
 // STEP 6 — System prompt. The system message conditions the model on
 // persona, tone, and constraints WITHOUT consuming a user turn. It's
@@ -38,7 +73,12 @@ export async function POST(req: Request) {
   const result = streamText({
     model,
     system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages)
+    messages: await convertToModelMessages(messages),
+    tools,
+    // Default is `stepCountIs(1)` — one tool call max. Bumping to 3 lets
+    // the model chain calls (e.g. get_current_time → word_count) within a
+    // single user turn. Higher = more agentic but also slower + more tokens.
+    stopWhen: stepCountIs(3)
   })
 
   // `toUIMessageStreamResponse` returns a Response with the framing

@@ -222,3 +222,19 @@ body {
 
 .composer-send:hover:not(:disabled) { background: #0d9488; }
 .composer-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Tool-call indicator inside an assistant message. */
+.tool-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  margin: 4px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 6px;
+  text-transform: lowercase;
+}
