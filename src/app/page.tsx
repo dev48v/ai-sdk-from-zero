@@ -9,8 +9,15 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { modelLabel } from '@/lib/ai-meta'
+
+const SUGGESTIONS = [
+  'Explain WebAssembly in one paragraph.',
+  'Write a haiku about TypeScript.',
+  'What are the three hardest things in computer science?',
+  'Recommend a beginner project for learning Rust.'
+]
 
 export default function Page() {
   const [input, setInput] = useState('')
@@ -22,6 +29,23 @@ export default function Page() {
   })
 
   const isStreaming = status === 'streaming' || status === 'submitted'
+
+  // STEP 5 — Auto-scroll to bottom whenever a new chunk lands. We watch
+  // the last assistant message's text length so we re-scroll on EVERY
+  // streamed token, not just on message-count changes.
+  const scrollRef = useRef<HTMLDivElement | null>(null)
+  const lastText = messages[messages.length - 1]?.parts
+    .map(p => (p.type === 'text' ? p.text : ''))
+    .join('') ?? ''
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+  }, [messages.length, lastText.length])
+
+  function send(text: string) {
+    if (!text.trim() || isStreaming) return
+    sendMessage({ text })
+    setInput('')
+  }
 
   return (
     <main className="app">
@@ -38,9 +62,18 @@ export default function Page() {
       </header>
 
       <section className="card">
-        <div className="messages">
+        <div className="messages" ref={scrollRef}>
           {messages.length === 0 && (
-            <div className="empty">Say hello. Press Enter to send.</div>
+            <div className="empty">
+              <p>Say hello. Or try one of these:</p>
+              <div className="suggestions">
+                {SUGGESTIONS.map(s => (
+                  <button key={s} className="suggestion" onClick={() => send(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
           {messages.map(m => (
             <div key={m.id} className={`msg msg-${m.role}`}>
@@ -62,9 +95,7 @@ export default function Page() {
           className="composer"
           onSubmit={e => {
             e.preventDefault()
-            if (!input.trim() || isStreaming) return
-            sendMessage({ text: input })
-            setInput('')
+            send(input)
           }}
         >
           <input

@@ -94,8 +94,40 @@ body {
 .empty {
   color: var(--fg-dim);
   text-align: center;
-  padding: 60px 0;
-  font-style: italic;
+  padding: 40px 0;
+}
+
+.empty > p { margin: 0 0 18px; font-style: italic; }
+
+.suggestions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.suggestion {
+  padding: 10px 14px;
+  font-size: 13px;
+  text-align: left;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-style: normal;
+}
+
+.suggestion:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+@media (max-width: 640px) {
+  .suggestions { grid-template-columns: 1fr; }
 }
 
 .msg {
